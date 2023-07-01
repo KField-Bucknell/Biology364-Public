@@ -1,0 +1,128 @@
+---
+title: "Homework 05"
+author: "Biology Student"
+date: "09 Feb 2023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Due Friday 17 Feb 2023 at 11:59pm
+
+## Loading Libraries
+Use the following syntax to load any libraries that you need. This code will prevent errors that will interfere with knitting of the Rmd file.
+Also note that the `include=FALSE` option will prevent this code chunk from appearing in the markdown file.
+
+We will always load the entire tidyverse library, which includes *dplyr*, *ggplot2*, *readr*, and other packages.
+
+```{r Load Libraries, include=FALSE}
+# Load other packages here.
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+*Exploratory Data Analysis Checklist*
+
+_____________________________________
+
+Follow Chapter 5 from *Exploratory Data Analysis with R* (https://leanpub.com/exdata/read_full) by Roger D. Peng to explore the Uganda Bat Dataset from Lab 4
+
+You also may wish to follow along with the analysis in EDA5. 
+To do that, you will need to access the data as shown below.
+
+Remember to edit the Rmd to remove any irrelevant code for your assignment.
+
+For each of the "Tasks" in this homework you will only need one or two code chunks and short explanations of your rationale and results. 
+Some of them are very simple -- don't overthink it.
+
+## Formulate your question
+
+Always formulate your question(s) *before* you begin analyzing the data. 
+(But you may look at the names of the variables measured to see what questions are possible.)
+
+The data was collected from 103 bats in 2017. 
+There are four potential dependent variables with units of mm: "Total Length", "Hind Foot", "Ear", and "FA length".
+The potential dependent variable "Mass" is in g.
+
+There are six potential explanatory variables: 
+ - "Collection date"
+ - "Season": Whether the bat was captured in the Rainy or Dry season
+ - "Sex"                
+ - "Class": Includes Sex, Age (sexual maturity), and pregnancy status
+ - "Elevation": The elevation of the capture site. Note that it covers a small portion of the total habitat range for this species.
+ - "Habitat description": Field notes on the environment of the capture site.
+
+## Read in your data
+
+If you want to follow along with the EDA5 reading:
+
+```{r Load 2014 Ozone Data}
+download.file("https://aqs.epa.gov/aqsweb/airdata/hourly_44201_2014.zip", "hourly_44201_2014.zip")
+OzoneData <- read_csv("hourly_44201_2014.zip", col_types = "ccccinnccccccncnncccccc")
+file.remove("hourly_44201_2014.zip")
+```
+
+Some functions like read_csv() can unzip files!
+
+Note, if that download times out (takes more than 60 seconds), then you will have to download the file manually.
+
+The Ozone data that is used in EDA can be found at the EPA website:
+https://aqs.epa.gov/aqsweb/airdata/download_files.html
+
+For the homework, you will need to use the bat data.
+
+```{r Load Bat Data}
+BatData <- read_csv("UgandaBatsFilteredMetrics.csv", 
+    col_types = cols(`Collection date` = col_date(format = "%m/%d/%y")))
+```
+
+Remember to delete any unnecessary code chunk(s).
+
+## Check the packaging
+
+Validate that the data file is complete and properly loaded.
+See above for the expectations.
+
+## Run str()
+
+I prefer the `glimpse()` function of dplyr over `str()`
+
+Fix any problems that you find, such as converting strings to factors when appropriate.
+
+Keep all of the data together, even if you do not plan on using some of the columns.
+
+## Look at the top and the bottom of your data
+
+## Check your “n”s
+
+## Validate with at least one external data source
+
+For the bat dataset, the information here will be helpful: https://eol.org/pages/327340/data
+
+The species is *Epomophorus labiatus*, the Little Epauletted Fruit Bat. 
+
+## Try the easy solution first
+
+## Challenge your solution
+
+This step can be skipped because we don't really know enough about bat data to derive a good "challenge".
+
+## Follow up
+
+Anser the questions in the follow-up section.
+
+*Analytic Graphics*
+
+___________________
+
+
+Follow Section 6.1 and 6.2 to visualize the comparisons that were essential to answering the question.
+
+## Show comparisons
+
+This may be somewhat redundant with your work above.
+
+## Show causality, mechanism, explanation, OR systematic structure (for 100% credit)
+
+Note that we can't test **causality** in this dataset, but you can try to get a good handle on the variable(s) that show the best **correlation** with the dependent variable that you chose.

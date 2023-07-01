@@ -1,0 +1,38 @@
+---
+title: "Homework 09"
+author: "R Pro"
+format: pptx
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+## Bullets
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+## Code
+
+```{r Load Libraries, include=FALSE}
+if (!require("knitr")) install.packages("knitr"); library(knitr)
+if (!require("corrplot")) install.packages("corrplot"); library(corrplot) # A pretty correlation plot
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+data(mtcars)
+cars.cor<-cor(mtcars, method="pearson")  
+print(cars.cor, digits=2)
+```
+
+## Correlation Plot
+
+```{r Correlation Plot}
+corrplot(cars.cor, order ="hclust") 
+```

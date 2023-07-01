@@ -1,0 +1,247 @@
+---
+title: "Lab 10"
+author: "Biology Student"
+date: "18 Mar 2023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Libraries
+
+```{r Load Libraries, include=FALSE}
+if (!require("devtools")) install.packages("devtools"); library(devtools)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse) # Load tidyverse last
+```
+
+## Objectives for Lab 10 and HW 10
+
+1. Introduction to RNA-Seq
+2. Become familiar with NGS file formats
+3. Using Galaxy on BisonNet
+4. Quality control of fastq files
+
+**This .Rmd file will be turned in Tuesday by 12:59pm as Homework 10**
+
+## Background
+
+For this lab, we will be using the dataset the following paper: 
+https://genome.cshlp.org/content/21/2/193.full
+
+The paper is also available in the Readings directory of the class repo (BrooksRNARegulation.pdf).
+
+The Dataset is from Deep Sequencing of Poly(A)+ RNA from the Drosophila melanogaster S2-DRSC cells that have been RNAi depleted of mRNAs encoding certain RNA binding proteins. 
+
+For the tutorial, you will need use the following files in Galaxy: 
+Untreated: SRR031711, SRR031714, SRR031716
+RNAi: SRR031718, SRR031724, SRR031726
+
+These files were obtained from the NCBI's Sequence Read Archive: https://www.ncbi.nlm.nih.gov/sra
+Look up each of the Run Accession numbers and record the needed information below.
+
+The number of reads is listed as "# of Spots".
+I have added the statistics for the first sample. 
+You will need to add the five other rows.
+
+```{r Summary}
+SRAsummary <- data.frame(SampleName=character(),
+                         LongName=character(),
+                         Layout=character(),
+                         Reads=double(),
+                         Bases=double())
+SRAsummary %>% 
+  add_row(
+    SampleName = "SRR031711", 
+    LongName = "S2_DRSC_Untreated-1", 
+    Layout = "SINGLE",                         # "SINGLE" or "PAIRED"
+    Reads = 6064911,                           # from # of Spots
+    Bases = 272.9 * 10^6) -> SRAsummary
+
+```
+
+Calculate how long each read is expected to be:
+
+```{r}
+SRAsummary %>%
+  mutate(ReadLength = round(Bases / (Reads * (1 + (Layout == "PAIRED"))))) -> SRAsummary
+print(SRAsummary)
+write_csv(SRAsummary, file = "SRAsummary.csv")
+```
+
+## Study Design
+
+Review the material at https://rnaseq.uoregon.edu/, in the paper, and in the SRA to answer the following questions:
+
+1. What are the biological conditions that we are going to compare? 
+
+2. How many biological replicates are we studying for each condition?
+
+3. What sequencing platform was used?
+
+4. What selection scheme (if any) was performed on the RNA?
+
+5. What was the depth of sequencing for each condition (millions of reads per sample)?
+
+6. What library prep protocol used? If a stranded library prep was used, what is the strandedness of the reads?
+
+7. Were the sequences single-end or paired end?
+
+8. What is the length of the reads?
+
+## Next Generation Sequencing Files
+
+The first type of file that we will examine is a fastq file. 
+DNA sequences are usually stored as fasta files.
+The "q" in fastq files is for quality scores. 
+FASTQ files are sequence files (usually DNA) that includes a quality score for every base.
+Fastq files are flat text files, but they are often found gzipped to save space, with the extension .fastq.gz or .fq.gz
+
+To look at fastq files in R, we will use the ShortRead package: 
+https://kasperdanielhansen.github.io/genbioconductor/html/ShortRead.html
+
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("ShortRead")
+library(ShortRead)
+```
+
+Reading FASTQ files
+The FASTQ file format is the standard way of representing raw (unaligned) next generation sequencing reads, particular for the Illumina platform. The format basically consists of 4 lines per read, with the lines containing
+
+1. Read name (sometimes includes flowcell ID or other information).
+2. Nucleotide sequence
+3. Either empty or a repeat of line 1
+4. Encoded read quality scores
+
+Paired-end reads are (usually) stored in two separate files, where the reads are ordered the same (this is obviously fragile; what if reads are re-ordered in one file and not the other?).
+
+These files are read by `readFastq()` which produces an object of class `ShortReadQ`.
+
+```{r}
+list.files()
+read_1 <- readFastq("SRR031714_1.head400.fastq")
+read_2 <- readFastq("SRR031714_2.head400.fastq")
+```
+
+The ShortReadQ class has an id and two sets of strings: one for the read nucleotides and one for the base qualities. 
+We can check these strings for the first ten reads and also that the ids match between read_1 and read_2.
+
+```{r}
+id(read_1)[1:10]
+sread(read_1)[1:10]
+quality(read_1)[1:10]
+# Check that ids match
+id(read_2)[1:10]
+# The end of each id is different for read 1 and read 2 (as expected).
+# To remove this we can use gsub and then check that the read names match
+?gsub
+sum(gsub("/1", "", id(read_1)) == gsub("/2", "", id(read_2)))
+sum(gsub("/1", "", id(read_1)) != gsub("/2", "", id(read_2)))
+```
+
+Note how the quality scores are listed as characters. You can convert them into standard 0-40 integer quality scores by
+
+```{r}
+as(quality(read_1), "matrix")[1:10,1:37]
+```
+
+In this conversion, each letter is matched to an integer between 0 and 40. 
+This matching is known as the “encoding” of the quality scores and there has been different ways to do this encoding. 
+Unfortunately, it is not stored in the FASTQ file which encoding is used, so you have to know or guess the encoding. 
+The ShortRead package does this for you.
+
+These numbers are related to the probability that the reported base is different from the template fragment (ie. a sequence error).
+
+# Galaxy!
+
+Log in at https://galaxy.bucknell.edu
+
+You must be on campus or connected to the VPN to access Galaxy on BisonNet.
+If you need help setting up the VPN, see:
+https://bucknell.teamdynamix.com/TDClient/40/LIT/KB/ArticleDet?ID=300 
+
+After you connect to galaxy, take the interactive tours on the `Galaxy UI` and the `History`.
+
+## Moving shared data into your history
+
+Click on the `Shared Data > Data Libraries` tab.
+
+Click the Pasilla Datset. Select all of the files and then `To History > as Datasets`.
+
+Click `Analyze Data` and verify that the 10 data files have been moved to the History.
+
+Click the eye icon next to each to verify that the files look like they are in the proper fastq format and that the reads are the expected length:  
+https://support.illumina.com/bulletins/2016/04/fastq-files-explained.html
+
+## QC Summary
+
+http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
+
+Review the examples of "Good" and "Bad" Illumina data and summarize your impressions of this dataset. 
+
+## fastp trimming and QC
+
+https://github.com/OpenGene/fastp
+
+The fastp program checks each read (or read pair) for quality and trims off poor quality sequencing, dropping any reads (or read pairs) that fail to meet the quality thresholds. 
+The program can then provide output that shows the quality of each read before and after trimming.
+Fastp thus replaces the separate steps of looking at QC with FastQC and trimming with Trimmomatic.
+
+Fastp performs several useful functions:
+
+1. Filter out bad reads (too low quality, too short, or too many N...)
+2. Cut low quality bases for per read in its 5' and 3' by evaluating the mean quality from a sliding window (like Trimmomatic but faster)
+3. Cut adapters. Adapter sequences can be automatically detected, which means you don't have to input the adapter sequences to trim them.
+4. Correct mismatched base pairs in overlapped regions of paired end reads, if one base is with high quality while the other is with ultra-low quality (we won't use this feature because it is slow)
+5. Report JSON format result for further interpreting
+6. Visualize quality control and filtering results on a single HTML page (like FASTQC but faster and more informative)
+
+First use Galaxy to run fastp on one of the SINGLE files, such as S2_DRSC_Untreated-1.
+The default settings can be used, except that under *Output Options*, you should select *Output JSON report*.
+Click *Execute* to submit the job to BisonNet.
+
+Second use Galaxy to run fastp on a set of the PAIRED files, such as S2_DRSC_Untreated-3_R1 and S2_DRSC_Untreated-3_R2. 
+Select *Paired* and then be careful that you have assigned R1 to Input 1 and R2 to Input 2 from **the same sample**.
+The default settings can be used, except that under *Output Options*, you should select *Output JSON report*.
+
+Wait for those two processes to run successfully (the output will appear Green in the history). 
+Then click one of the output files in the history and the *Run Job Again* icon. 
+Switch the input files to one of the other samples (being careful about paired or single reads), and then execute the job.
+
+For the single samples, fastp will produce 4 output files: a fastq file, an html file, and a json file.
+For the paired files, fastp will produce 4 output files: two fastq files (R1 output, R2 putput), an html file, and a json file. 
+
+To view the html files, you must download them (they are really ugly if you view them within galaxy). 
+Click on the html file in the history and then click the *Download* icon. 
+Find the zip file on your computer and then unzip it and open the html file in your web browser.
+
+You can download the six html files from fastp and look at them separately. 
+But if you have more than six samples, you are definitely going to want a more efficient way of visualizing them.
+
+## MultiQC
+
+Find MultiQC in the Tools menu of Galaxy and run it, selecting *fastp* and then all of the json files.
+After it finishes executing, download the html file and open it as described above.
+
+1. What percent of reads were removed from each sample during the trimming step?
+
+2. After trimming, how do the quality of the single-end reads compare to the paired-end reads (within each treatment group)?
+
+3. After trimming, how do the quality of the RNAi treated reads compare to the control reads (within each sequencing layout type)?
+
+4. Do you anticipate any problems using this data to compare differential transcript expression between the two treatment groups?
+
+## Helpful RNA-Seq Links
+
+RNA-seqlopedia: https://rnaseq.uoregon.edu/
+
+RNA-Seq Blog: http://www.rna-seqblog.com/
+
+QCFAIL Blog: https://sequencing.qcfail.com/
+(Unfortunately it looks like they are no longer posting, but they have some great posts about problems with certain older Illumina sequencers.)
+
+QCFAIL post about SRA file corruption: https://sequencing.qcfail.com/articles/data-can-be-corrupted-upon-extraction-from-sra-files/ 
+(This is why it is so important to look at the raw fastq files and check the lengths of the reads before trimming.)

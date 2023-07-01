@@ -1,0 +1,77 @@
+---
+title: "Homework 07"
+author: "Biology Student"
+date: "09 Feb 2023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Load Libraries, include=FALSE}
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+## Objectives
+
+For this assignment you will need to identify a dataset from a public data archive use it to conduct the following steps:
+
+- [ ] Not completed
+- [x] Completed
+
+1. Data Wrangling
+- [ ] Dataset meets the criteria described below (at least before cleaning begins)
+- [ ] Imported data checked to verify that it matches the dimensions described in the paper or help file
+- [ ] Structure of dataframe checked to verify that each variable has proper type (i.e. factors, numeric, etc.)
+- [ ] Some method used to look at data to ensure that it is correct (glimpse, headtail, etc.)
+2. Data Exploration
+- [ ] An appropriate summary is generated of the outcome variable (mean, median, summary, or other)
+- [ ] Each potential explanatory variable is summarized (could be as simple as skim())
+- [ ] The distribution of numeric variables are shown (histograms and/or QQ plots)
+3. Data Visualization
+- [ ] The outcome variable is plotted against one or more of the explanatory variables
+- [ ] An appropriate visualization is used for the type of data (boxplot, scatter plot, or histogram)
+- [ ] If some of the explanatory variables are quantitative was the correlation between them and the outcome variable checked? 
+- [ ] The visualization(s) use best principles for showing all of the data 
+- [ ] The visualization(s) demonstrate the major trends or contrasts in the data and help lead to the hypothesis
+- [ ] Results of the exploration and visualization are interpreted clearly to justify hypothesis
+4. Hypothesis testing using a generalized linear model
+- [ ] An appropriate glm model is used (linear model or negative binomial)
+- [ ] Model selection is used to derive a "best" model (backward selection using StepAIC) 
+- [ ] Model visualization is performed to show the outcome of the model (interact_plot)
+- [ ] Model is interpreted using AIC, estimates (coefficients), and p-values appropriately
+
+Your first step is to identify the dataset that you want to use and confirm that it is suitable for this assignment.
+
+- [ ] Contains between 100 and 10,000 observations.
+- [ ] Has a quantitative outcome variable (not logistic like survival).
+- [ ] Measures 4 or more potential explanatory variables (quantitative or categorical).
+- [ ] Is NOT a time series.
+
+## Public Data Archives
+
+You can find your dataset either by browsing a data archive or by finding a paper that includes the raw data as supplementary material (or links to a data archive).
+There are many specialized data archives (http://oad.simmons.edu/oadwiki/Data_repositories), but these are some general ones that include biology:
+
+- Data Dryad: https://datadryad.org/search
+- Open Science Framework: https://osf.io/
+- Figshare: https://figshare.com/
+- Mendeley Data: https://data.mendeley.com/
+- TreeBASE: https://www.treebase.org
+- Zenodo: https://zenodo.org/
+- Dataverse: https://dataverse.harvard.edu/
+
+Spend no more than *one hour* browsing those data archives or papers looking for a dataset to use.
+If you are unable to find one that is suitable, you may use the built in dataset called gapminder. 
+
+```{r Load Gapminder}
+if (!require("gapminder")) install.packages("gapminder"); library(gapminder)
+data(gapminder)
+glimpse(gapminder_unfiltered)
+```
+
+That only represents a tiny fraction of the gapminder data archive. 
+To access the other data, go to https://www.gapminder.org/data/ and find at least three different datasets to download and analyze (after joining them). 
+For your analysis you will need to have one dependent variable and at least two potential explanatory variables.
+

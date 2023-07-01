@@ -1,0 +1,253 @@
+---
+title: "Project 3 Summary"
+authors: "Zhao, Jiawen, Amano, Aiko, Brendel, Meredith T., Buabeng, Isaac K., DeSana, Andrew,
+Douek, Naomi R., Frattasio, Molly O., Gao, Jasmine, Guzman, Dariel, Halbreiner, Claudia J., 
+Ling, Tianze, Martinson, Katy A., Paula-Gil, Heather, Pring, Sam S., Prohofsky, Anna, 
+Saum, Paul B., Smith, Meghan C., Sporea, Gloria A., Thrall, Abigail E., Umeh Jr., Micah N.
+Zheng, Carol, Field, Ken A."
+date: "13 Apr 2023"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Load Libraries, include=FALSE}
+if (!require("knitr")) install.packages("knitr"); library(knitr)
+if (!require("UpSetR")) install.packages("UpSetR"); library(UpSetR)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse) # Load tidyverse last
+```
+
+## Project 3 Groups
+
+| NAME                   | EMAL                | Project3 | Tissue | Comparison |
+|------------------------|---------------------|:--------:|:------:|:----------:|
+| Buabeng, Isaac K.      | ikb001@bucknell.edu | 1        |  AMY   | Isolation  |
+| Amano, Aiko            | aa037@bucknell.edu  | 2        |  AMY   | Treatment  |
+| DeSana, Andrew         | ad049@bucknell.edu  | 3        |  BNST  | Isolation  |
+| Prohofsky, Anna        | ap048@bucknell.edu  | 4        |  BNST  | Treatment  |
+| Halbreiner, Claudia J. | cjh030@bucknell.edu | 5        |  FC    | Isolation  |
+| Guzman, Dariel         | dg030@bucknell.edu  | 5        |        |            |
+| Frattasio, Molly O.    | mof003@bucknell.edu | 6        |  FC    | Treatment  |
+| Pring, Sam S.          | ssp008@bucknell.edu | 6        |        |            |
+| Brendel, Meredith T.   | mtb018@bucknell.edu | 7        |  HIPP  | Isolation  |
+| Thrall, Abigail E.     | aet009@bucknell.edu | 7        |        |            |
+| Paula-Gil, Heather     | hpg004@bucknell.edu | 8        |  HIPP  | Treatment  |
+| Douek, Naomi R.        | nrd005@bucknell.edu | 8        |        |            |
+| Gao, Jasmine           | mg060@bucknell.edu  | 9        |  PVN   | Isolation  |
+| Sporea, Gloria A.      | gas020@bucknell.edu | 9        |        |            |
+| Umeh Jr., Micah N.     | mnu001@bucknell.edu | 10       |  PVN   | Treatment  |
+| Saum, Paul B.          | pbs018@bucknell.edu | 10       |        |            |
+| Smith, Meghan C.       | mcs023@bucknell.edu | 11       | HIPP-FC|   Tissue   |
+| Ling, Tianze           | tl016@bucknell.edu  | 11       |        | Pair-Untr  |
+| Martinson, Katy A.     | kam071@bucknell.edu | 12       |AMY-BNST|   Tissue   |
+| Zheng, Carol           | yz017@bucknell.edu  | 12       |        | Pair-Untr  |
+
+
+```{r Loading Data, message = FALSE}
+# Isolation Comparison
+isofilelist <- list.files(path = "voles/IsolationResults", pattern = "*.csv", full.names = T)
+isofilenames <- list.files(path = "voles/IsolationResults", pattern = "*.csv", full.names = F)
+isofiles <- lapply(isofilelist, read_csv)
+isofilenames <- gsub(".csv", "", isofilenames)
+names(isofiles) <- isofilenames
+allisoresults <- bind_rows(isofiles, .id = "column_label")
+
+# Treatment Comparison
+treatfilelist <- list.files(path = "voles/TreatmentResults", pattern = "*.csv", full.names = T)
+treatfilenames <- list.files(path = "voles/TreatmentResults", pattern = "*.csv", full.names = F)
+treatfiles <- lapply(treatfilelist, read_csv)
+treatfilenames <- gsub(".csv", "", treatfilenames)
+names(treatfiles) <- treatfilenames
+alltreatresults <- bind_rows(treatfiles, .id = "column_label")
+
+# Tissue Comparison
+tissuefilelist <- list.files(path = "voles/TissueResults", pattern = "*.csv", full.names = T)
+tissuefilenames <- list.files(path = "voles/TissueResults", pattern = "*.csv", full.names = F)
+tissuefiles <- lapply(tissuefilelist, read_csv)
+tissuefilenames <- gsub(".csv", "", tissuefilenames)
+names(tissuefiles) <- tissuefilenames
+alltissueresults <- bind_rows(tissuefiles, .id = "column_label")
+```
+
+Note that `message = FALSE` was set to avoid outputting all of the column specifications.
+Remove that option if you need to debug the column types.
+
+### Isolation Comparisons
+
+```{r}
+# Verify that each results table has expected padj and fold change cutoffs
+allisoresults %>%
+  group_by(column_label) %>%
+  summarise(max_padj = max(padj), min_foldchange = min(foldChange), 
+            max_foldchange = max(foldChange))
+
+# Count the number of genes differentially expressed
+allisoresults %>%
+  group_by(column_label) %>%
+  dplyr::filter(str_detect(column_label, regex("DOWN", ignore_case = T))) %>%
+  summarize(Down = length(ID)) -> iso_summary_down
+allisoresults %>%
+  group_by(column_label) %>%
+  dplyr::filter(str_detect(column_label, regex("UP", ignore_case = T))) %>%
+  summarize(Up = length(ID)) -> iso_summary_up
+
+#Combine
+iso_summary_down$column_label <- gsub(".DOWN", "", 
+                                      iso_summary_down$column_label, ignore.case = TRUE)
+iso_summary_up$column_label <- gsub(".UP", "", 
+                                    iso_summary_up$column_label, ignore.case = TRUE)
+iso_summary <- merge(iso_summary_up, iso_summary_down, by = "column_label")
+iso_summary <- dplyr::rename(iso_summary, Comparison = column_label)
+iso_summary
+```
+
+### Treatment Comparisons
+
+Repeat the above summary for the treatment-dependent differential expression.
+
+```{r}
+# Verify that each results table has expected padj and fold change cutoffs
+alltreatresults %>%
+  group_by(column_label) %>%
+  summarise(max_padj = max(padj), min_foldchange = min(foldChange), 
+            max_foldchange = max(foldChange))
+
+# Count the number of genes differentially expressed
+alltreatresults %>%
+  group_by(column_label) %>%
+  dplyr::filter(str_detect(column_label, regex("DOWN", ignore_case = T))) %>%
+  summarize(Down = length(ID)) -> treat_summary_down
+alltreatresults %>%
+  group_by(column_label) %>%
+  dplyr::filter(str_detect(column_label, regex("UP", ignore_case = T))) %>%
+  summarize(Up = length(ID)) -> treat_summary_up
+
+#Combine
+treat_summary_down$column_label <- gsub(".DOWN", "", 
+                                      treat_summary_down$column_label, ignore.case = TRUE)
+treat_summary_up$column_label <- gsub(".UP", "", 
+                                    treat_summary_up$column_label, ignore.case = TRUE)
+treat_summary <- merge(treat_summary_up, treat_summary_down, by = "column_label")
+treat_summary <- dplyr::rename(treat_summary, Compartreatn = column_label)
+treat_summary
+```
+
+
+### Tissue Comparisons
+
+Repeat the above summary for the tissue-dependent differential expression.
+
+```{r}
+# Verify that each results table has expected padj and fold change cutoffs
+alltissueresults %>%
+  group_by(column_label) %>%
+  summarise(max_padj = max(padj), min_foldchange = min(foldChange), 
+            max_foldchange = max(foldChange))
+
+# Count the number of genes differentially expressed
+alltissueresults %>%
+  group_by(column_label) %>%
+  dplyr::filter(str_detect(column_label, regex("DOWN", ignore_case = T))) %>%
+  summarize(Down = length(ID)) -> tissue_summary_down
+alltissueresults %>%
+  group_by(column_label) %>%
+  dplyr::filter(str_detect(column_label, regex("UP", ignore_case = T))) %>%
+  summarize(Up = length(ID)) -> tissue_summary_up
+
+#Combine
+tissue_summary_down$column_label <- gsub(".DOWN", "", 
+                                      tissue_summary_down$column_label, ignore.case = TRUE)
+tissue_summary_up$column_label <- gsub(".UP", "", 
+                                    tissue_summary_up$column_label, ignore.case = TRUE)
+tissue_summary <- merge(tissue_summary_up, tissue_summary_down, by = "column_label")
+tissue_summary <- dplyr::rename(tissue_summary, Compartissuen = column_label)
+tissue_summary
+```
+
+Which manipulation (tissue, isolation, or treatment) resulted in the greatest numbers of genes meeting the padj and fc cutoffs?
+
+Which tissue had the greatest numbers of differentially expressed genes in each comparison group?
+
+## Gene-by-gene comparison
+
+We would like to know if the same genes are affected by isolation and oxytocin treatment.
+
+Compare the transcripts or genes identified as differentially expressed in your comparison to the other one in the same tissue.
+
+We could use a Venn diagram to make this comparison, but like pie charts these are not always the best visualization. Or are they?
+https://www.promusa.org/blogpost174-The-best-genomics-Venn-diagram-ever-deconstructed
+
+The UpSetR package includes better tools for visualizing the intersections of multiple sets. 
+https://cran.rstudio.com/web/packages/UpSetR/vignettes/basic.usage.html
+
+The following code plots the intersection between the Isolation results for all of the files loaded. 
+
+```{r}
+de_batch <- allisoresults %>% 
+  dplyr::select(Tissue = column_label, ID)
+
+intersection <- de_batch %>% mutate(value =1) %>% spread(Tissue, value, fill =0 )
+head(intersection)
+intersection <- as.data.frame(intersection)
+upset(intersection, nsets = 10)
+upset(intersection, empty.intersections = "on", order.by = "freq", nsets = 10)
+```
+
+Use this example to compare your DE results to the other comparison in the same tissue.
+
+```{r}
+de_HIPP_iso <- allisoresults %>% 
+  select(Tissue = column_label, ID) %>%
+  filter(str_detect(Tissue, 'HIPP'))
+de_HIPP_treat <- alltreatresults %>% 
+  select(Tissue = column_label, ID) %>%
+  filter(str_detect(Tissue, 'HIPP'))
+de_HIPP <- bind_rows(de_HIPP_iso, de_HIPP_treat)
+
+intersection_HIPP <- de_HIPP %>% mutate(value =1) %>% spread(Tissue, value, fill =0 )
+head(intersection_HIPP)
+intersection_HIPP <- as.data.frame(intersection_HIPP)
+upset(intersection_HIPP, nsets = 10)
+```
+
+Were any of the same genes found differentially expressed in both comparisons? 
+
+Yes, 7 genes were Up in treatment and Down in isolation and 2 genes were Up in both.
+
+If so, which genes and were they regulated in the same direction in both?
+
+```{r}
+# Genes Up in both
+intersection_HIPP %>%
+  filter((HIPP.Isolation.Up == 1) & (HIPP.Treatment.Up == 1))
+# Genes Up in treatment and Down in isolation
+intersection_HIPP %>%
+  filter((HIPP.Isolation.Down == 1) & (HIPP.Treatment.Up == 1))
+```
+
+
+Prediction:
+
+
+## Acknowledgements
+
+Using lapply() to run functions over a list: https://astrostatistics.psu.edu/su07/R/html/base/html/lapply.html
+
+Converting a list into a single data frame: https://stackoverflow.com/questions/2851327/convert-a-list-of-data-frames-into-one-data-frame
+
+UpSetR: https://cran.rstudio.com/web/packages/UpSetR/
+
+Converting gene lists into UpSetR format: https://crazyhottommy.blogspot.com/2016/01/upset-plot-for-overlapping-chip-seq.html
+
+Upset plots for genome analysis: https://genomespot.blogspot.com/2017/09/upset-plots-as-replacement-to-venn.html 
+
+The best genomics Venn diagram ever?
+https://www.promusa.org/blogpost174-The-best-genomics-Venn-diagram-ever-deconstructed
+
+Reminder about how to bind rows:
+https://dplyr.tidyverse.org/reference/bind.html

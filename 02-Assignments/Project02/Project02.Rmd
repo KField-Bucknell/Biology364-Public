@@ -1,0 +1,114 @@
+---
+title: "Group Project 2"
+author: "Prof. Ken Field"
+date: "07 Mar 2023"
+output:
+  html_document:
+    df_print: paged
+subtitle: Biology 368/664 Bucknell University
+---
+
+## Objectives
+
+1. Critically read a scientific paper and assess the evidence provided
+2. Complete reporting checklists to determine if best practices were followed prior to publication
+3. Assess a published paper for issues with reproducibility and transparency
+4. Identify questionable research practices and describe appropriate methods to prevent them
+5. Reproduce the analysis for one of the main figures of the paper (Homework 09)
+
+```{r Load Libraries, include=FALSE}
+if (!require("knitr")) install.packages("knitr"); library(knitr)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+## Paper Assignment
+
+Complete the survey by 11am on Thursday March 9th.
+
+https://docs.google.com/forms/d/e/1FAIpQLSexRCMY3TyynwE4-OH-rbenLfs7j7AvJWnlgUwdFuYf7f5dqA/viewform?usp=sf_link
+
+You will learn the paper that you are assigned in class on Thursday, Mar 9. 
+Groups will be assigned within each Thursday section.
+
+```{r}
+papers <- dir("papers", pattern = "pdf", full.names = TRUE, ignore.case = TRUE)
+papers <- gsub("papers/","",papers)
+papers <- gsub(".pdf","",papers)
+papers
+```
+
+## Groups
+
+We will work in groups of 2 or 3 for this project, with each group being different from the Project 1 groups.
+
+```{r echo=FALSE, results='asis'}
+Project2 <- read_csv("../../00-Syllabus/roster_2023.csv") %>%
+  arrange(NAME) %>%
+  mutate(Paper = c(
+    "[Guan.2021]",
+    "[Pruitt.2016]",
+    "[Le.2014]",
+    "[Kern.2013]",
+    "[Estruch.2013]",
+    "[Sato.2013]",
+    "[Guan.2021]",
+    "[Abdallah.2020]",
+    "[Pruitt.2016]",
+    "[Woo.2004]",
+    "Laskowski",
+    "[Abdallah.2020]",
+    "[Sato.2013]",
+    "Laskowski",
+    "Modlmeier",
+    "[Le.2014]",
+    "[Kern.2013]",
+    "[Estruch.2013]",
+    "[Woo.2004]",
+    "Modlmeier"
+  ))
+
+table(Project2$Paper)
+Project2 %>%
+  arrange(Paper) %>%
+  kable()
+```
+
+## Grading
+
+Each student will be expected to complete the following tasks to earn 85% of the points available for this assignment (21/25).
+
+- Read and discuss your paper with your group partners
+  + Focus on the methods and results
+  + For the major conclusion(s) evaluate the strength of the supporting evidence
+- Complete the `nr-editorial-policy` and `nr-reporting-summary` checklists (*open in Adobe Acrobat*)
+  + If the copy in the Repo doesn't work, download these forms at the links below and open in Acrobat
+  + For any deficient items on the checklists, describe the information needed
+  + Refer to nr-reporting-life-sciences-research.pdf for guidelines
+- Determine if you could repeat the analysis that is most essential to conclusions of the paper
+  + If data or methods are not available, look for follow-up studies that provide the required details
+  + If follow-up studies are not available, describe the missing information needed to perform the analysis
+- For each Questionable Research Practice discussed in Fraser *et al*:
+  + Find evidence to exclude this QRP, or
+  + Describe steps that should have been taken to prevent this QRP (see Forstmeier *et al*)
+- Attempt to reproduce one of the key analyses from the paper
+  + Evaluate the Data Accessibility for the manuscript, using the Nature Publishing Group Guidelines (link below)
+  + For HW09 obtain the data from the paper and reproduce one of the analyses
+- Present summary of reproducibility assessment in class
+
+## Download Links
+Reporting standards for Nature Journals: 
+https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards
+
+Editorial Policy Checklist: 
+https://www.nature.com/documents/nr-editorial-policy-checklist.pdf
+
+Reporting Summary Checklist for Life Sciences Research:
+https://www.nature.com/documents/nr-reporting-summary.pdf
+
+Data availability:
+https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards#availability-of-data
+
+## Acknowledgements
+
+Each group should use an **Acknowledgements** section to document the participation of each member and the collaboration within groups.
+Full credit for the assignment will require equal participation of each group member.

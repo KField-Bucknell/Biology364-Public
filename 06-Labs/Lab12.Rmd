@@ -1,0 +1,142 @@
+---
+title: "Lab 12"
+author: "Biology Student"
+date: "09 Apr 2023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Libraries
+
+```{r Load Libraries, include=FALSE}
+if (!require("devtools")) install.packages("devtools"); library(devtools)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse) # Load tidyverse last
+```
+
+## Objectives for Lab 12
+
+1. Differential transcript expression measurement
+2. Comparison of methods of differential expression
+
+## Read Alignment
+
+For this lab, we will use Kallisto to map the reads to the transcriptome. 
+Kallisto is a pseudo-aligner, which means that it does not actually align each read to each transcript.
+Instead, it uses kmer matching to determine (with very high accuracy) the transcript that each read most likely matches. 
+
+## Lab 12
+
+We will assume that you have already completed the [Galaxy](1-Galaxy.md) tutorial and the [DEBrowser](2-DEBrowser.md) tutorial. 
+
+For DEBrowser, you will need the following files from the Project03 voles folder:
+
+1. The metadata file for all of the Paired vehicle-treated samples:
+vole_metadata_only_pv.csv
+
+2. The gene table for all of the Paired vehicle-treated samples:
+vole_genetable_only_pv.csv
+
+To launch DEBrowser, run the following in the Console:
+
+library(debrowser); startDEBrowser()
+
+We will walk through the analysis pipeline in lab to determine the following:
+
+1. Determine that the data loaded in properly and take note of the read statistics
+
+2. Determine the method of filtering that we will use
+
+3. Compare normalization by TMM and MRN methods and determine the method that we will use
+
+4. Use PCA to determine if there are any outliers that should be removed
+
+- Compare this to Jessica's analysis of outliers in the full dataset (Vole Differential Gene Expression Report)
+- She removed: S69_AMY, S77_PVN, S80_AMY, S95_PVN
+
+5. Summarize the numbers of remaining samples to determine completeness
+
+6. Analyze differential expression by tissue within this group of samples
+
+7. Determine the values that will be used by all groups for the following settings:
+
+- Normalization:
+- Batch correction:
+- Differential Expression method:
+- Treatment and Covariate:
+- Settings for the DE method:
+- Process used to determine cut off values below:
+- padj value cut off:
+- foldChange cut off:
+- Tables to download and filename conventions:
+- Figures to download, figure size, figure format, and filename conventions:
+
+8. Generate a heatmap of genes of interest
+
+- Oxt gene, oxytocin/neurophysin I prepropeptide, "ENSMOCG00000017703"
+- oxtr gene, oxytocin receptor, "ENSMOCG00000002867"
+- avp gene, arginine vasopressin, "ENSMOCG00000014821"
+- Avpr1b gene, arginine vasopressin receptor 1B, "ENSMOCG00000002679"
+- Nr3c2 gene, nuclear receptor subfamily 3, group C, member 2, "ENSMOCG00000010658"
+- Crh gene, corticotropin releasing hormone, "ENSMOCG00000018638"
+- Crhr1, corticotropin releasing hormone receptor 1, "ENSMOCG00000011532"
+- Crhr2, corticotropin releasing hormone receptor 2, "ENSMOCG00000019712"
+
+## Filtering data for Project 3
+
+Use this section to load in your metadata and genetable for the appropriate samples
+for your group project assignment. Then verify that the sample names in the metadata
+file match exactly the columns in the gene table (including the same order).
+
+First load in the metadata and check it to make sure that it looks complete.
+
+```{r}
+library(readr)
+# Effect of isolation on vehicle-treated voles
+veh_Eiso_BNST_metadata <- read_csv("../02-Assignments/Project03/voles/veh.Eiso.BNST_metadata.csv")
+head(veh_Eiso_BNST_metadata)
+veh_Eiso_BNST_metadata %>%
+  select(Isolation, Treatment) %>%
+  table
+# Effect of oxytocin treatment on isolated voles
+iso_Eoxt_BNST_metadata <- read_csv("../02-Assignments/Project03/voles/iso.Eoxt.BNST_metadata.csv")
+head(iso_Eoxt_BNST_metadata)
+iso_Eoxt_BNST_metadata %>%
+  select(Isolation, Treatment) %>%
+  table
+# Effect of isolation and oxytocin treatment together
+Eiso_oxt_BNST_metadata <- read_csv("../02-Assignments/Project03/voles/Eiso+oxt.BNST_metadata.csv")
+head(Eiso_oxt_BNST_metadata)
+Eiso_oxt_BNST_metadata %>%
+  select(Isolation, Treatment) %>%
+  table
+```
+
+You next need to load in the ALL_genetable and then select the appropriate
+columns. Then save that csv for your DEBrowser analysis.
+
+```{r}
+ALL_genetable <- read_csv("../02-Assignments/Project03/voles/ALL_genetable.csv")
+
+```
+
+After completing Lab 12, use the section below to remove any necessary samples from
+BOTH the metadata and gene table. Check that the samples still match.
+
+```{r}
+
+```
+
+
+
+## Helpful RNA-Seq Links
+
+RNA-seqlopedia: https://rnaseq.uoregon.edu/
+
+RNA-Seq Blog: http://www.rna-seqblog.com/
+
+## Acknowledgements
+Using dplyr to make contingency tables: 
+https://stackoverflow.com/questions/60234443/using-table-function-from-base-with-dplyr-pipe-syntax

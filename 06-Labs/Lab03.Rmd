@@ -1,0 +1,244 @@
+---
+title: "Lab 03"
+output: github_document
+author: "Ken Field"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!require("NHANES")) install.packages("NHANES"); library(NHANES)
+if (!require("car")) install.packages("car"); library(car)
+if (!require("UsingR")) install.packages("UsingR"); library(UsingR)
+if (!require("cowplot")) install.packages("cowplot"); library(cowplot)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+## NHANES Dataset
+
+Data from the US National Health and Nutrition Examination Study
+https://www.cdc.gov/nchs/nhanes/index.htm
+
+This is survey data collected by the US National Center for Health Statistics (NCHS) which has
+conducted a series of health and nutrition surveys since the early 1960’s. Since 1999 approximately
+5,000 individuals of all ages are interviewed in their homes every year and complete the health
+examination component of the survey. The health examination is conducted in a mobile examination
+center (MEC).
+
+A description of the variables can be found in the package description.
+
+```{r NHANES}
+data("NHANES")
+summary(NHANES)
+help(NHANES)
+```
+
+Several of the variables are categorical.
+Let's convert them into factors all at once so they are handled by R properly.
+We will learn a better way to do this in the future, but for now this will work.
+
+```{r}
+NHANES <- as.data.frame(unclass(NHANES), stringsAsFactors=TRUE)
+```
+
+
+## Model of Height Data
+
+First look at the entire data set.
+
+```{r Histogram}
+ggplot(NHANES) +
+  aes(x = Height) +
+  geom_histogram(bins=100) +
+  theme_cowplot()
+```
+
+Now lets just look at the data for children aged 2-15. 
+Also drop any row that has NA for Height.
+
+```{r Children Subset}
+NHANES_child <- filter(NHANES, (Age >= 2 & Age <= 15))
+NHANES_child <- drop_na(NHANES_child, Height)
+ggplot(NHANES_child) +
+  aes(x = Height) +
+  geom_histogram(bins=100) +
+  theme_cowplot()
+```
+
+## Model of the data
+
+First, we will test to see if a simple model of using mean +- standard deviation
+can predict the height of children. 
+
+```{r Simple Model}
+mean(NHANES_child$Height)
+sd(NHANES_child$Height)
+summary(NHANES_child$Height)
+```
+
+The error is large when using mean to predict the height. 
+If this data had a normal distribution, this model would be better.
+
+```{r}
+error_mean <- NHANES_child$Height - mean(NHANES_child$Height)
+ggplot(NULL, aes(error_mean)) +
+  geom_histogram(bins = 100) + 
+  xlim(-60, 60) +
+  xlab("Error when predicting height with mean")
+rmse_mean <- sqrt(mean(error_mean**2))
+rmse_mean
+```
+
+More sophisticated models are necessary!
+
+Note that below we are storing the plots as objects in memory so that we can plot
+several at once. 
+
+```{r Age}
+p1 <- ggplot(NHANES_child, aes(x = Age, y = Height)) +
+  geom_point(position = "jitter",size=0.05) +
+  scale_x_continuous(breaks = seq.int(0, 20, 2)) +
+  ggtitle('A: original data') +
+  theme_cowplot()
+
+lmResultHeightOnly <- lm(Height ~ Age + 0, data=NHANES_child)
+lmResultHeightOnly
+summary(lmResultHeightOnly)
+rmse_heightOnly <- sqrt(mean(lmResultHeightOnly$residuals**2))
+rmse_heightOnly
+
+p2 <-  ggplot(NHANES_child, aes(x = Age, y = Height)) +
+  geom_point(position = "jitter",size=0.05) +
+  scale_x_continuous(breaks = seq.int(0, 20, 2)) + 
+  annotate('segment',x=0,xend=max(NHANES_child$Age),
+           y=0,yend=max(lmResultHeightOnly$fitted.values),
+           color='blue',lwd=1) + 
+  ggtitle('B: age') +
+  theme_cowplot()
+
+lmResultHeight <- lm(Height ~ Age, data=NHANES_child)
+lmResultHeight
+summary(lmResultHeight)
+rmse_height <- sqrt(mean(lmResultHeight$residuals**2))
+rmse_height
+
+p3 <- ggplot(NHANES_child, aes(x = Age, y = Height)) +
+  geom_point(position = "jitter",size=0.05) +
+  scale_x_continuous(breaks = seq.int(0, 20, 2)) + 
+  geom_smooth(method='lm',se=FALSE) + 
+  ggtitle('C: age + constant') +
+  theme_cowplot()
+
+plot_grid(p1,p2,p3,ncol=2)  ## Another great function of the cowplot package
+```
+
+This model is much better than using only the mean.
+
+Can we make it even better?
+
+```{r}
+ggplot(NHANES_child, aes(x = Age, y = Height)) +
+  geom_point(aes(colour = Gender), 
+             position = "jitter", 
+             alpha = 0.8,
+             size=0.05) +
+  geom_smooth(method='lm',aes(group = Gender, 
+                              colour = Gender)) + 
+  theme(legend.position = c(0.25,0.8)) + 
+  ggtitle('D: age + constant + gender') +
+  theme_cowplot()
+
+lmResultGenderAge <- lm(Height ~ Gender + Age, data=NHANES_child)
+lmResultGenderAge
+summary(lmResultGenderAge)
+```
+
+## Model Comparisons
+
+We now want to know how much better the new model is than the one that didn't include gender.
+The anova() function provides a convenient way to compare two nested models.
+This is described very nicely here:
+https://www.r-bloggers.com/2021/05/how-to-compare-nested-models-in-r/
+
+```{r}
+anova(lmResultHeight, lmResultGenderAge)
+```
+As you can see, the p value for the comparison is much less than 0.05, giving us high confidence that second model is a better fit for the data than the first model.
+
+
+## Test Assumptions
+
+Linear models make the following assumptions:
+1. Independence of data points
+2. Normally distributed residuals
+3. Homoscedasticity
+
+### Check for autocorrelation
+
+The Durbin-Watson test checks for autocorrelation in a linear model.
+The null hypothesis is no correlation among the residuals.
+The function dubrinWatsonTest() is part of the car package.
+
+```{r}
+durbinWatsonTest(lmResultGenderAge)
+```
+
+Since this p-value is less than 0.05, we can reject the null hypothesis and conclude that the residuals in this regression model are autocorrelated.
+
+This does not mean that we can't use a linear modeling approach. 
+But we do have to be careful about interpreting the results. 
+In THIS CASE, the autocorrelation is presumably due to the fact that tall 4 year-olds become tall 5 year-olds, etc. 
+So it is not surprising in a set of data that have a time component to find autocorrelation.
+
+### Residual distribution
+
+We need to check that the residuals are similar at each age and for both genders by looking at plot 3 below.
+
+```{r}
+plot(lmResultGenderAge)
+```
+
+That looks good. 
+Gender does not make a consistent difference. 
+There is a slight increase in the standardized residuals at higher ages, but it is not very large.
+
+
+Linear models assume that the **residuals** have a normal distribution.
+By using the plot() function on the linear model we can see the distribution
+of the residuals in the first plot.
+
+```{r}
+plot(lmResultGenderAge)
+```
+
+In the future we will learn a better way to confirm the distribution of the residuals, 
+but for now just look at the first two plots to see how they look. 
+
+### Normally distributed residuals
+
+Check residual distribution: 
+```{r}
+hist(lmResultGenderAge$residuals, breaks = 20)
+```
+
+Well that looks pretty good. 
+And when we check the QQ Plot (plot 2, above): 
+We find that most of the points lie along the reference line.
+
+### Homoscedasticity
+
+See Residuals vs Fitted plot (plot 1, above): 
+The line is pretty flat but not perfect. 
+The residuals are not randomly distributed but seem to increase with the fitted values. 
+There is slight evidence of kurtosis (S-shaped pattern), but not too bad.
+
+Overall, this model is showing that it is a fairly good fit for the assumptions.
+
+It may be possible to improve the model using additional variables...
+
+## Acknowledgements
+=========================
+Linear regression assumptions: 
+https://rpubs.com/aryn999/LinearRegressionAssumptionsAndDiagnosticsInR 
+https://www.r-bloggers.com/2016/01/how-to-detect-heteroscedasticity-and-rectify-it/ 
+https://web.ma.utexas.edu/users/mks/statmistakes/modelcheckingplots.html
+https://bookdown.org/jimr1603/Intermediate_R_-_R_for_Survey_Analysis/testing-regression-assumptions.html

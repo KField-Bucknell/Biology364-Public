@@ -1,0 +1,7 @@
+Sample	File	Batch	Treatment
+Untreated_1	Untreated_1.transcripts.tsv	Single	Untreated
+Untreated_3	Untreated_3.transcripts.tsv	Paired	Untreated
+Untreated_4	Untreated_4.transcripts.tsv	Paired	Untreated
+RNAi_1	RNAi_1.transcripts.tsv	Single	RNAi
+RNAi_3	RNAi_3.transcripts.tsv	Paired	RNAi
+RNAi_4	RNAi_4.transcripts.tsv	Paired	RNAi

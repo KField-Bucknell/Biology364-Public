@@ -1,0 +1,411 @@
+---
+title: "Lab 06"
+author: "Professor Field"
+date: "17 Feb 2022"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Libraries
+
+```{r Load Libraries, include=FALSE}
+if (!require("gapminder")) install.packages("gapminder"); library(gapminder)
+if (!require("mice")) install.packages("mice"); library(mice)
+if (!require("dendextend")) install.packages("dendextend"); library(dendextend)
+if (!require("pheatmap")) install.packages("pheatmap"); library(pheatmap)
+if (!require("gplots")) install.packages("gplots"); library(gplots)
+if (!require("devtools")) install.packages("devtools"); library(devtools)
+if (!require("cowplot")) install.packages("cowplot"); library(cowplot)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+## Objectives for Lab 6
+
+1. Working with logistic outcome variables
+2. Clustering
+3. Dimension Reduction
+
+## Background
+
+We will be using a dataset from the World Health Organization (WHO) COVID-19 Data Dashboard.
+https://covid19.who.int/info
+
+The WHO coronavirus (COVID-19) dashboard presents official daily counts of COVID-19 cases, deaths and vaccine utilisation reported by countries, territories and areas. Through this dashboard, we aim to provide a frequently updated data visualization, data dissemination and data exploration resource, while linking users to other useful and informative resources.
+
+The COVID case and death data is provided in the file **WHO-COVID-19-global-table-data.csv**
+
+The WHO-COVID-19-global-table-data.csv file has the following columns:
+
+*Field* 	Type	Description
+*Name*	String	Country, territory, area
+*WHO_region*	String	WHO Region
+*Cases - cumulative total*	Integer	Cumulative confirmed cases reported to WHO to date.
+*Cases - cumulative total per 100000 population*	Decimal	Cumulative confirmed cases reported to WHO to date per 100,000 population.
+*Cases - newly reported in last 7 days*	Integer	New confirmed cases reported in the last 7 days. Calculated by subtracting previous cumulative case count (8 days prior) from current cumulative cases count.
+*Cases - newly reported in last 7 days per 100000 population*	Decimal	New confirmed cases reported in the last 7 days per 100,000 population.
+*Cases - newly reported in last 24 hours*	Integer	New confirmed cases reported in the last 24 hours. Calculated by subtracting previous cumulative case count from current cumulative cases count.
+*Deaths - cumulative total*	Integer	Cumulative confirmed deaths reported to WHO to date.
+*Deaths - cumulative total per 100000 population*	Decimal	Cumulative confirmed deaths reported to WHO to date per 100,000 population.
+*Deaths - newly reported in last 7 days*	Integer	New confirmed deaths reported in the last 7 days. Calculated by subtracting previous cumulative death count (8 days prior) from current cumulative deaths count.
+*Deaths - newly reported in last 7 days per 100000 population*	Decimal	New confirmed deaths reported in the last 7 days per 100,000 population.
+*Deaths - newly reported in last 24 hours*	Integer	New confirmed deaths reported in the last 24 hours. Calculated by subtracting previous cumulative death count from current cumulative deaths count.
+
+Load the data in, clean up the column names and then use mutate to change WHO.Region to a factor.
+
+```{r Read Data}
+covid <- read_csv("../04-Data/WHO-COVID-19-global-table-data.csv")
+names(covid) <- make.names(names(covid))
+str(covid)
+summary(covid)
+
+covid <- covid %>%
+  mutate(WHO.Region = as.factor(WHO.Region))
+
+summary(covid$WHO.Region)
+```
+
+Summarize how many Deaths were newly reported in last 7 days per 100000 population by Region 
+
+```{r}
+covid %>% 
+  group_by(WHO.Region) %>%
+  summarise(`Death Rate` = mean(Deaths...newly.reported.in.last.7.days.per.100000.population), na.rm = TRUE)
+```
+
+## Vaccines
+
+The vaccination data is providid in the file **vaccination-data.csv**
+
+In addition there is a file, vaccination-metadata.csv that decodes the various types of vaccines administered around the world. 
+
+The vaccination-data.csv file has the following columns:
+
+FIELD 	Type	Description
+COUNTRY	String	Country, territory, area
+ISO3	String	ISO Alpha-3 country code
+WHO_REGION	String	WHO regional offices: WHO Member States are grouped into six WHO regions: Regional Office for Africa (AFRO), Regional Office for the Americas (AMRO), Regional Office for South-East Asia (SEARO), Regional Office for Europe (EURO), Regional Office for the Eastern Mediterranean (EMRO), and Regional Office for the Western Pacific (WPRO).
+DATA_SOURCE	String	Indicates data source: - REPORTING: Data reported by Member States, or sourced from official reports - OWID: Data sourced from Our World in Data: https://ourworldindata.org/covid-vaccinations
+DATE_UPDATED	Date	Date of last update
+TOTAL_VACCINATIONS	Integer	Cumulative total vaccine doses administered
+PERSONS_VACCINATED_1PLUS_DOSE	Decimal	Cumulative number of persons vaccinated with at least one dose
+TOTAL_VACCINATIONS_PER100	Integer	Cumulative total vaccine doses administered per 100 population
+PERSONS_VACCINATED_1PLUS_DOSE_PER100	Decimal	Cumulative persons vaccinated with at least one dose per 100 population
+PERSONS_FULLY_VACCINATED	Integer	Cumulative number of persons fully vaccinated
+PERSONS_FULLY_VACCINATED_PER100	Decimal	Cumulative number of persons fully vaccinated per 100 population
+VACCINES_USED	String	Combined short name of vaccine: “Company - Product name” (see below)
+FIRST_VACCINE_DATE	Date	Date of first vaccinations. Equivalent to start/launch date of the first vaccine administered in a country.
+NUMBER_VACCINES_TYPES_USED	Integer	Number of vaccine types used per country, territory, area
+
+To ensure that we all produce the same results, use the csv files in the github Data folder (but in the future feel free to download the latest data from https://covid19.who.int/info ).
+
+
+
+Read in the vaccination data - 
+Lucky for you I have already formatted the dates. They are tricky!
+
+```{r}
+vaccination_data <- read_csv("../04-Data/vaccination-data.csv", 
+    col_types = cols(DATE_UPDATED = col_date(format = "%Y-%m-%d"), 
+        FIRST_VACCINE_DATE = col_date(format = "%Y-%m-%d")))
+
+str(vaccination_data)
+summary(vaccination_data)
+```
+
+Use mutate to change WHO_REGION and DATA_SOURCE to factors.
+
+```{r}
+vaccination_data <- vaccination_data %>%
+  mutate(across(WHO_REGION:DATA_SOURCE, as.factor))
+summary(vaccination_data)
+```
+
+Summarize the PERSONS_FULLY_VACCINATED_PER100 by WHO_REGION. (Don't forget na.rm = TRUE)
+
+```{r}
+vaccination_data %>% 
+  group_by(WHO_REGION) %>%
+  summarize(`Full Vaxxed per 100` = mean(PERSONS_FULLY_VACCINATED_PER100,
+                                         na.rm = TRUE))
+```
+
+Now let's merge the covid outcomes and vaccination data into a single data frame. 
+
+The left_join() function in dplyr does the merging for us. While you are at it, you should remove the "Global" row of the covid data.
+
+```{r}
+covid_vaccination <- covid %>%
+  filter(Name != "Global") %>%
+  left_join(vaccination_data, by = c("Name" = "COUNTRY"))
+```
+
+Now let's explore the missing data so that we can determine if we should clean it up.
+
+```{r, fig.width = 4, fig.height=2}
+sum(is.na(covid_vaccination))
+md.pattern(covid_vaccination, rotate.names = TRUE )
+```
+
+There are 204 countries with complete data. 
+
+For this exercise we will just exclude any country with any missingness.
+
+```{r}
+covid_complete <- covid_vaccination %>%
+  drop_na()
+```
+
+
+## Clustering
+
+Next we will follow *Exploratory Data Analysis with R* Chapters 12 and 13 
+https://leanpub.com/exdata/read_full
+
+First we will start with some visualization of the data to see if there are any obvious clusters.
+
+```{r}
+ggplot(covid_complete, aes(x=PERSONS_FULLY_VACCINATED_PER100, 
+                              y=Deaths...newly.reported.in.last.7.days.per.100000.population,
+                              color=WHO.Region)) +
+  geom_point() +
+  theme_minimal()
+```
+
+But that isn't very helpful because deaths appear all near the 0 axis. 
+A typical way to deal with that is a log transformation, but we need to watch out for 0 values.
+For that reason we will add a pseudocount of 0.01 before log transforming.
+
+```{r}
+covid_complete <- covid_complete %>%
+  filter(Deaths...newly.reported.in.last.7.days.per.100000.population >=0) %>%
+  mutate(lnDeathsper100k = log(0.1 + Deaths...newly.reported.in.last.7.days.per.100000.population))
+```
+
+Wait a second, do we have a zombie apocalypse starting too!?!?!
+
+```{r}
+ggplot(covid_complete, aes(x=PERSONS_FULLY_VACCINATED_PER100, 
+                              y=lnDeathsper100k,
+                              color=WHO.Region)) +
+  geom_point() +
+  theme_cowplot()
+```
+
+Well that is better, and it is starting to show some sort of pattern.
+
+Now lets try to cluster the data based on the variables.
+
+Using the hierarchical clustering function hclust() and the linear distance of each length/width from each other, we can generate the following dendrogram.
+
+```{r}
+hClustering <- covid_complete %>%
+  select(x=PERSONS_FULLY_VACCINATED_PER100, y=lnDeathsper100k) %>% 
+  dist %>% 
+  hclust
+hClustering$labels <- covid_complete$ISO3
+plot(hClustering)
+```
+
+How many clusters are there?
+It depends on where you cut the tree. 
+There could be two, three, or even more...
+
+```{r}
+ggplot(covid_complete, aes(x=PERSONS_FULLY_VACCINATED_PER100, 
+                              y=lnDeathsper100k,
+                              color=as.factor(cutree(hClustering, h=60)))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+ggplot(covid_complete, aes(x=PERSONS_FULLY_VACCINATED_PER100, 
+                              y=lnDeathsper100k,
+                              color=as.factor(cutree(hClustering, h=10)))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+```
+
+Now use all of the variables to try to come up with a better cluster.
+
+We need to only use the data that can be compared across countries because it is normalized per population. 
+(Trust me, I made this mistake at first and China and India will always be outliers.)
+
+While we are at it, we are going to shorten all the names. 
+You'll thank me later.
+
+```{r}
+covid_relative <- covid_complete %>%
+  select(matches("_PER|per")) %>%
+  select(CasesCumul_100k = Cases...cumulative.total.per.100000.population, 
+         Cases7days_100k = Cases...newly.reported.in.last.7.days.per.100000.population,
+         DeathsCumul_100k = Deaths...cumulative.total.per.100000.population,
+         Deaths7day_100k = Deaths...newly.reported.in.last.7.days.per.100000.population,
+         Vax_100 = TOTAL_VACCINATIONS_PER100, 
+         Vax1Plus_100 = PERSONS_VACCINATED_1PLUS_DOSE_PER100, 
+         FullyVax_100 = PERSONS_FULLY_VACCINATED_PER100)
+fullClustering <- covid_relative %>%
+  dist %>% 
+  hclust
+fullClustering$labels <- covid_complete$ISO3
+plot(fullClustering)
+```
+
+```{r}
+ggplot(covid_complete, aes(x=PERSONS_FULLY_VACCINATED_PER100, 
+                              y=lnDeathsper100k,
+                              color=as.factor(cutree(fullClustering, h=5000)))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+```
+
+We can see some potentially interesting patterns here, but we may not be looking at the most important x and y variables to see the clustering.
+
+## K-Means Clustering
+
+K-Means is an alternative clustering algorithm that starts with a fixed number of clusters and then determines the best way to fit the data to that number.
+Note that I chose 5 clusters to mimic what was in the previous hierarchical clustering tree.
+
+```{r}
+kmeansObj <- covid_relative %>%
+  kmeans(centers = 5)
+names(kmeansObj)
+kmeansObj$cluster
+```
+
+```{r}
+ggplot(covid_complete, aes(x=PERSONS_FULLY_VACCINATED_PER100, 
+                              y=lnDeathsper100k,
+                              color=as.factor(kmeansObj$cluster))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+```
+
+Are the clusters identical from the two methods?
+
+## Heatmaps
+
+We can also explore the data using a heatmap. The rows are ordered based on the order of the hierarchical clustering (using the “complete” method). The colored bar indicates the species category each row belongs to. The color in the heatmap indicates the length of each measurement (from light yellow to dark red).
+
+https://cran.r-project.org/web/packages/dendextend/vignettes/Cluster_Analysis.html
+
+```{r, fig.width = 4, fig.height=6}
+country_labels <- covid_complete$ISO3
+dend <- as.dendrogram(fullClustering)
+# Scale the entire matrix so that the heatmap colors are comparable between each variable
+scaled_covid <- covid_relative %>% as.matrix %>% scale
+# Set annotation colors to true species
+ann_colors <- list(Region = as.factor(covid_complete$WHO.Region))
+covid.matrix <- as.matrix(scaled_covid)
+rownames(covid.matrix) <- c(1:203) # to annotate, matrix and ann_row must have same rownames
+ann_row <- data.frame(Region = as.factor(covid_complete$WHO.Region))
+rownames(ann_row) <- rownames(covid.matrix)
+pheatmap(covid.matrix, 
+         cluster_cols = FALSE,
+         cutree_rows = 3,
+         annotation_row = ann_row, 
+         show_rownames = F
+         )
+```
+
+## Principal Component Analysis
+
+Adapted from: https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/#ref1
+
+We will be using PCA to reduce the dimensions of the iris dataset (4 continuous variables). 
+There are several R packages that can be used for PCA, but we will use function `prcomp` from the base `stats` package.
+
+PCA must be done on a matrix and it is best if it is scaled and centered (so that the different variables have the same scale and a mean of 0). 
+Log transforming the matrix is also recommended if it improves the normality.
+However, log transformation is not going to help with this kind of data that is highly left censored. 
+I will just show a few examples.
+
+```{r}
+shapiro.test(covid_relative$CasesCumul_100k)
+shapiro.test(log(covid_relative$CasesCumul_100k + 0.01))
+shapiro.test(covid_relative$Deaths7day_100k)
+shapiro.test(log(covid_relative$Deaths7day_100k + 0.01))
+shapiro.test(covid_relative$FullyVax_100)
+shapiro.test(log(covid_relative$FullyVax_100 + 0.01))
+```
+
+
+```{r}
+covid.pca <- prcomp(covid_relative,
+                 center = TRUE,
+                 scale. = TRUE) 
+print(covid.pca)
+summary(covid.pca)
+```
+
+The print method returns the standard deviation of each of the four PCs (the square root of their eigenvalues), and their rotation (or loadings), which are the coefficients of the linear combinations of the continuous variables.
+The eigenvalues provide information of the variability in the data. The scores provide information about the structure of the observations. The loadings (or correlations) allow you to get a sense of the relationships between variables, as well as their associations with the extracted PCs.
+
+For more about the mathematics behind these values: https://www.datacamp.com/community/tutorials/pca-analysis-r
+
+The summary tells us how much of the variance that each PC captured. 
+This tells us that 52% of the variance was captured in just one PC and 75% in two!
+
+Now to plot the results.
+
+```{r}
+scores <- as.data.frame(covid.pca$x) # extract the scores of the PCA
+ggplot(data = scores, aes(x = PC1, y = PC2, label = as.factor(country_labels))) +
+  geom_hline(yintercept = 0, colour = "gray65") +
+  geom_vline(xintercept = 0, colour = "gray65") +
+  geom_text(colour = "dodgerblue", alpha = 0.8, size = 4) 
+```
+
+
+```{r}
+library(devtools); install_github("vqv/ggbiplot"); library(ggbiplot)
+biplot(covid.pca)
+```
+
+
+The biplot helps to show how the variables contributed to the principal components (and how they are correlated with each other).
+Here is a nice visualization that shows only those correlations.
+
+```{r}
+install_github("vqv/ggbiplot")
+library(ggbiplot)
+ggbiplot(covid.pca, obs.scale = 1, var.scale = 1, 
+         groups = as.factor(covid_complete$WHO.Region), ellipse = TRUE) + 
+  theme_cowplot()
+```
+
+Just to make the labels visible, let's try to move the axis limits:
+
+```{r}
+ggbiplot(covid.pca, obs.scale = 1, var.scale = 1, 
+         groups = as.factor(covid_complete$WHO.Region), ellipse = TRUE) + 
+  theme_cowplot() +
+  xlim(c(-6, 4)) +
+  ylim(c(-4, 6))
+```
+
+
+## Correlation heatmaps
+
+As you can see from the PCA plots, some of these variables are highly correlated with each other. 
+We can look at this directly using a correlation matrix. 
+This will again require a package from github.
+
+```{r}
+install_github("kassambara/ggcorrplot")
+library(ggcorrplot)
+corr <- cor(covid_relative)
+print(corr)
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(covid_relative)
+print(p.mat)
+# Visualize the correlation matrix
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+     outline.col = "white", lab = TRUE)
+```
+
+For more examples of ggcorrplot: http://www.sthda.com/english/wiki/ggcorrplot-visualization-of-a-correlation-matrix-using-ggplot2

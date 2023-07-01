@@ -1,0 +1,389 @@
+---
+title: "Lab 06"
+author: "Professor Field"
+date: "21 Feb 2023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Libraries
+
+```{r Load Libraries, include=FALSE}
+if (!require("mice")) install.packages("mice"); library(mice) # For missing data exploration 
+if (!require("pheatmap")) install.packages("pheatmap"); library(pheatmap) # For pretty heatmaps
+if (!require("devtools")) install.packages("devtools"); library(devtools) # To allow github packages to be loaded
+if (!require("cowplot")) install.packages("cowplot"); library(cowplot) # Just plain graphs
+install_github("vqv/ggbiplot"); library(ggbiplot) # Pretty biplots for PCA
+install_github("kassambara/ggcorrplot"); library(ggcorrplot) # Pretty correlation plots
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse) # ALWAYS LAST
+```
+
+## Objectives for Lab 6
+
+1. Wrangling and merging two data frames
+2. Clustering
+3. Dimension Reduction
+4. Data Visualization
+
+## Background
+
+We will be using two datasets to compare vaccination rates and political voting.
+
+The vaccination rate data was downloaded on 20 Feb 2023 from 
+https://data.cdc.gov/Vaccinations/COVID-19-Vaccinations-in-the-United-States-County/8xkx-amqh
+and is provided in the file **Current_COVID-19_Vaccinations_in_the_United_States_County.csv**
+
+Note that I filtered the data to only include the most recent date.
+
+The descriptions of each column can be found at: 
+https://www.cdc.gov/coronavirus/2019-ncov/vaccines/reporting-vaccinations.html
+
+## Data Wrangling
+
+Load in the data and begin the wrangling process:
+ 1. Clean up the column names (if needed)
+ 2. Use filter() to remove any unwanted rows
+ 3. Use select() to choose which columns are of interest (choose one or two rates to study)
+
+```{r Read Data}
+vaccine <- read_csv("../04-Data/Current_COVID-19_Vaccinations_in_the_United_States_County.csv",
+                    col_types = cols(Date = col_date(format = "%m/%d/%Y")))
+vaccine <- vaccine %>%
+  mutate(State = as.factor(Recip_State))
+glimpse(vaccine)
+```
+
+Lucky for you I have already formatted the date. They are tricky!
+
+There are several categories of vaccination data and these data within each category are highly correlated to each other because they are often subsets of each other.
+For example, everyone in the 18plus category is also in the 12plus category.
+
+Review the categories and choose one to include in your exploratory data analysis.
+
+```{r}
+vaccine_selected <- vaccine %>%
+  select(State, Recip_County, Metro_status, SVI_CTGY, matches("18Plus")) 
+glimpse(vaccine_selected)
+```
+
+
+Summarize the vaccination rate for each state (remember the group_by() function)
+
+```{r}
+summary(vaccine_selected$State)
+vaccine_selected %>% 
+  group_by(State) %>%
+  summarise(n = n(), `Vaccination Rate` = mean(Series_Complete_18PlusPop_Pct, na.rm = T)) %>%
+  arrange(`Vaccination Rate`)
+```
+
+## Choose States
+
+Choose 2-5 states to include in your analysis. 
+(Trust me, it is very messy to include all of the data.)
+If you choose large states with many counties, you should choose fewer states. 
+Ideally you will at least 50 counties and at most 200.
+
+```{r}
+vaccine_filter <- vaccine_selected %>%
+  filter(State %in% c("MO", "AL", "PA", "NH", "VT"))
+vaccine_filter %>% 
+  group_by(State) %>%
+  summarise(n = n(), `Vaccination Rate` = mean(Series_Complete_18PlusPop_Pct, na.rm = T)) %>%
+  arrange(`Vaccination Rate`)
+```
+
+Is this an accurate way to aggregate the data?
+
+## Politics
+
+The county-level presidential voting results from 2020 are in the file **2020_US_County_Level_Presidential_Results.csv**
+
+This file was obtained from the github repo at
+https://github.com/tonmcg/US_County_Level_Election_Results_08-20
+
+Read in the voting data - 
+
+
+```{r}
+voting <- read_csv("../04-Data/2020_US_County_Level_Presidential_Results.csv")
+
+```
+
+Explore the data to determine what is present and if any cleaning is needed.
+Note that you will only want to keep data that has been normalized by population. (Why?)
+
+```{r}
+
+```
+
+Summarize the differential vote by state. 
+
+```{r}
+
+```
+
+## Joining
+
+Before we can merge the two datasets, we need to identify the columns that match.
+
+Oh no! One uses full state names and the other uses abbreviations!
+To allow us to match them, we will need to bring in another table that has both.
+
+```{r}
+us_states_territories <- read_csv("../04-Data/us-states-territories.csv")
+```
+
+And then we will use left_join() from dplyr to add the state names to that data frame.
+
+```{r}
+vaccine_plus <- vaccine_filter %>%
+  left_join(us_states_territories, by = c("State" = "Abbreviation"))
+```
+
+
+
+Now let's merge the vaccination and voting data into a single data frame. 
+
+The join functions in dplyr do the merging for us. 
+Use the help function to review the different types of join (inner, left, right, and outer) to decide which is best for this situation. 
+
+```{r}
+combo <- full_join(vaccine_plus, voting, by = c("Name" = "state_name", 
+                                                 "Recip_County" = "county_name")) %>%
+  rename(County = Recip_County)
+```
+
+Now let's explore the missing data so that we can determine if we should clean it up.
+
+```{r, fig.width = 4, fig.height=2}
+sum(is.na(combo))
+md.pattern(combo, rotate.names = TRUE )
+```
+
+How many counties have complete data?
+
+Explore the counties with missing data and decide how to proceed.
+
+
+```{r}
+covid_complete <- combo %>%
+  drop_na()
+```
+
+
+## Clustering
+
+Next we will follow *Exploratory Data Analysis with R* Chapters 12 and 13 
+https://leanpub.com/exdata/read_full
+
+First we will start with some visualization of the data to see if there are any obvious clusters.
+
+```{r}
+ggplot(covid_complete, aes(x=Series_Complete_18PlusPop_Pct, 
+                              y=per_dem,
+                              color=State, shape = Metro_status)) +
+  geom_point() +
+  theme_minimal()
+  
+```
+
+What sort of pattern do you see with the first glance?
+
+
+Now lets try to cluster the data based on the variables.
+
+Using the hierarchical clustering function hclust() and the linear distance of each length/width from each other, we can generate the following dendrogram.
+
+```{r}
+hClustering <- covid_complete %>%
+  select(x=Series_Complete_18PlusPop_Pct, y=per_dem) %>% 
+  dist %>% 
+  hclust
+hClustering$labels <- covid_complete$State
+plot(hClustering)
+```
+
+Ignore the messiness of the labels!
+
+How many clusters are there?
+It depends on where you cut the tree. 
+There could be two, three, or even more...
+
+```{r}
+ggplot(covid_complete, aes(x=Series_Complete_18PlusPop_Pct, 
+                              y=per_dem,
+                              color=as.factor(cutree(hClustering, h=60)))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+ggplot(covid_complete, aes(x=Series_Complete_18PlusPop_Pct, 
+                              y=per_dem,
+                              color=as.factor(cutree(hClustering, h=10)))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+```
+
+Now use more of the variables to try to come up with a better clusters.
+
+We need to only use the data that can be compared across counties because it is normalized per population. 
+
+
+```{r}
+covid_relative <- covid_complete %>%
+  select(matches("pct|per")) 
+fullClustering <- covid_relative %>%
+  dist %>% 
+  hclust
+fullClustering$labels <- covid_complete$State
+plot(fullClustering)
+```
+
+```{r}
+ggplot(covid_complete, aes(x=Series_Complete_18PlusPop_Pct, 
+                              y=per_dem,
+                              color=as.factor(cutree(fullClustering, h=120)))) +
+  geom_point() +
+  scale_colour_discrete(name  = "Cluster") +
+  theme_cowplot()
+```
+
+We can see some potentially interesting patterns here, but we may not be looking at the most important x and y variables to see the clustering.
+
+## K-Means Clustering
+
+K-Means is an alternative clustering algorithm that starts with a fixed number of clusters and then determines the best way to fit the data to that number.
+Note that I chose 5 clusters to mimic what was in the previous hierarchical clustering tree.
+
+```{r}
+kmeansObj <- covid_relative %>%
+  kmeans(centers = 5)
+names(kmeansObj)
+kmeansObj$cluster
+```
+
+```{r}
+ggplot(covid_complete, aes(x=Series_Complete_18PlusPop_Pct, 
+                              y=per_dem,
+                              color=as.factor(kmeansObj$cluster))) +
+  geom_point() +
+  scale_colour_discrete(name  ="Cluster") +
+  theme_cowplot()
+```
+
+Are the clusters identical from the two methods?
+
+## Heatmaps
+
+We can also explore the data using a heatmap. The rows are ordered based on the order of the hierarchical clustering (using the “complete” method). The colored bar indicates the species category each row belongs to. The color in the heatmap indicates the length of each measurement (from light yellow to dark red).
+
+https://cran.r-project.org/web/packages/dendextend/vignettes/Cluster_Analysis.html
+
+```{r, fig.width = 4, fig.height=6}
+state_labels <- covid_complete$State
+dend <- as.dendrogram(fullClustering)
+# Scale the entire matrix so that the heatmap colors are comparable between each variable
+scaled_covid <- covid_relative %>% as.matrix %>% scale
+# Set annotation colors to true species
+ann_colors <- list(Metro = as.factor(covid_complete$Metro_status))
+covid.matrix <- as.matrix(scaled_covid)
+rownames(covid.matrix) <- c(1:272) # to annotate, matrix and ann_row must have same rownames
+ann_row <- data.frame(Metro = as.factor(covid_complete$Metro_status))
+rownames(ann_row) <- rownames(covid.matrix)
+pheatmap(covid.matrix, 
+         cluster_cols = TRUE,
+         cutree_rows = 3,
+         annotation_row = ann_row, 
+         show_rownames = F
+         )
+```
+
+## Principal Component Analysis
+
+Adapted from: https://tgmstat.wordpress.com/2013/11/28/computing-and-visualizing-pca-in-r/#ref1
+
+We will be using PCA to reduce the dimensions of the iris dataset (4 continuous variables). 
+There are several R packages that can be used for PCA, but we will use function `prcomp` from the base `stats` package.
+
+PCA must be done on a matrix and it is best if it is scaled and centered (so that the different variables have the same scale and a mean of 0). 
+Log transforming the matrix is also recommended if it improves the normality.
+However, log transformation is not going to help with this kind of data that is highly left or right censored. 
+I will just show a few examples.
+
+```{r}
+shapiro.test(covid_relative$Series_Complete_18PlusPop_Pct)
+shapiro.test(log(covid_relative$Series_Complete_18PlusPop_Pct + 0.01))
+shapiro.test(covid_relative$per_dem)
+shapiro.test(log(covid_relative$per_dem + 0.01))
+```
+
+
+```{r}
+covid.pca <- prcomp(covid_relative,
+                 center = TRUE,
+                 scale. = TRUE) 
+print(covid.pca)
+summary(covid.pca)
+plot(covid.pca,
+     xlab = "Principal Component",
+     type = 'b',
+     main = 'Scree plot')
+```
+
+The print method returns the standard deviation of each of the four PCs (the square root of their eigenvalues), and their rotation (or loadings), which are the coefficients of the linear combinations of the continuous variables.
+The eigenvalues provide information of the variability in the data. The scores provide information about the structure of the observations. The loadings (or correlations) allow you to get a sense of the relationships between variables, as well as their associations with the extracted PCs.
+
+For more about the mathematics behind these values: https://www.datacamp.com/community/tutorials/pca-analysis-r
+
+The summary tells us how much of the variance that each PC captured. 
+This tells us that 52% of the variance was captured in just one PC and 75% in two!
+
+Now to plot the results.
+
+```{r}
+scores <- as.data.frame(covid.pca$x) # extract the scores of the PCA
+ggplot(data = scores, aes(x = PC1, y = PC2, label = as.factor(state_labels))) +
+  geom_hline(yintercept = 0, colour = "gray65") +
+  geom_vline(xintercept = 0, colour = "gray65") +
+  geom_text(colour = "dodgerblue", alpha = 0.8, size = 4) 
+```
+
+
+```{r}
+biplot(covid.pca, xlabs = covid_complete$State)
+```
+
+
+The biplot helps to show how the variables contributed to the principal components (and how they are correlated with each other).
+Here is a nice visualization that shows only those correlations.
+
+```{r}
+ggbiplot(covid.pca, obs.scale = 1, var.scale = 1, 
+         groups = covid_complete$State, ellipse = TRUE) + 
+  theme_cowplot()
+```
+
+
+
+## Correlation heatmaps
+
+As you can see from the PCA plots, some of these variables are highly correlated with each other. 
+We can look at this directly using a correlation matrix. 
+This will again require a package from github.
+
+```{r}
+corr <- cor(covid_relative)
+print(corr)
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(covid_relative)
+print(p.mat)
+# Visualize the correlation matrix
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+     outline.col = "white", lab = FALSE)
+```
+
+For more examples of ggcorrplot: http://www.sthda.com/english/wiki/ggcorrplot-visualization-of-a-correlation-matrix-using-ggplot2

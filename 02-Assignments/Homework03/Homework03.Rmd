@@ -1,0 +1,189 @@
+---
+title: "Homework 03"
+output: github_document
+author: "Biol 364 Student"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!require("UsingR")) install.packages("UsingR"); library(UsingR)
+if (!require("cowplot")) install.packages("cowplot"); library(cowplot)
+if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
+```
+
+## GitHub Documents
+
+This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+
+## The Pick et al. Dataset
+
+The dataset that you will be exploring will be found in the Homework03 folder.
+It was downloaded from the Dryad Data Repository at:
+https://doi.org/10.5061/dryad.40jp4
+The paper describing the analysis of this data can be found here:
+https://doi.org/10.1086/688918
+
+**Disentangling Genetic and Prenatal Maternal Effects on Offspring Size and Survival**
+Joel L. Pick, Christina Ebneter, Pascale Hutter, and Barbara Tschirren
+*The American Naturalist* 2016 188:6, 628-639
+
+Data of body mass, size and survival throughout development of Japanese quail chicks originating from reciprocal crosses of divergent artificial selection lines for prenatal maternal investment
+
+### Abstract
+Organizational processes during prenatal development can have long-term effects on an individual’s phenotype. Because these early developmental stages are sensitive to environmental influences, mothers are in a unique position to alter their offspring’s phenotype by differentially allocating resources to their developing young. However, such prenatal maternal effects are difficult to disentangle from other forms of parental care, additive genetic effects, and/or other forms of maternal inheritance, hampering our understanding of their evolutionary consequences. Here we used divergent selection lines for high and low prenatal maternal investment and their reciprocal line crosses in a precocial bird—the Japanese quail (*Coturnix japonica*)—to quantify the relative importance of genes and prenatal maternal effects in shaping offspring phenotype. Maternal but not paternal origin strongly affected offspring body size and survival throughout development. Although the effects of maternal egg investment faded over time, they were large at key life stages. Additionally, there was evidence for other forms of maternal inheritance affecting offspring phenotype at later stages of development. Our study is among the first to successfully disentangle prenatal maternal effects from all other sources of confounding variation and highlights the important role of prenatal maternal provisioning in shaping offspring traits closely linked to fitness.
+
+
+```{r Importing Data}
+quail <- read_csv("pick_et_al.csv", trim_ws = TRUE)
+head(quail)
+```
+
+The following description of the data was also provided:
+Column Name - Description
+"animal" - offspring ID
+"mother" - maternal ID
+"father" - paternal ID
+"hatch.mass" - offspring hatchling mass (g)
+"week2.mass" - offspring week 2 mass (g)
+"week2.tarsus" - offspring week 2 tarsus length (mm)
+"week4.mass" - offspring week 4 mass (g)
+"week4.tarsus" - offspring week 4 tarsus length (mm)
+"adult.tarsus" - offspring adult tarsus length (mm)
+"egg.mass" - egg mass (g) that offspring originated from
+"maternal.line" - selection line of the mother; H = high investment line, L = low investment line
+"paternal.line" - selection line of the father; H = high investment line, L = low investment line
+"sex" - offspring sex
+"replicate" - selection line replicate
+"hatching.day" - day of hatching (17 or 18) relative to start of incubation (day 0)
+"hatch.env" - hatching environment (specific incubator)
+"week2.env" - chick rearing environment (specific cage) from hatching to week 2
+"week4.env" - juvenile rearing environment (specific cage) from week 2 to week 4
+"survive" - survival to adulthood
+"exclude.surv" - whether individual was excluded from survival analysis or not (TRUE = excluded); see methods
+
+```{r Summary}
+summary(quail)
+```
+
+You can see that some of the data is categorical, but it is of the class "character". 
+We should change that to ensure that it these variables are handled properly during analysis.
+
+### Factor the appropriate variables
+I have shown you how to do one of these, but you will need to complete this process, referring to the description of each variable.
+
+```{r Factoring data}
+quail$sex <- as.factor(quail$sex)
+table(quail$sex)
+```
+
+### Explore the data
+Next explore the data to determine if variables look like they will need to be transformed or if they already have a normal distribution.
+
+```{r Data Exploration}
+simple.eda(quail$hatch.mass)
+shapiro.test(quail$hatch.mass)
+shapiro.test(quail$hatch.mass[quail$sex=="Female"])
+shapiro.test(quail$hatch.mass[quail$sex=="Male"])
+```
+
+### Is it important to test for normality for each population separately? 
+
+
+```{r t Test}
+t.test(hatch.mass ~ sex, data = quail)
+```
+
+This shows us that hatch mass depends on the sex of the chick (p = 0.0221).
+
+After exploring the dataset, formulate some additional tentative hypotheses that you wish to test.
+I have provided some examples of the types of graphs that you could consider. 
+You should alter these examples for your own use (and fix any issues that you find.)
+
+```{r Data Visualization}
+ggplot(quail) +
+  aes(x = hatch.mass) +
+  geom_histogram(bins=100) +
+  theme_cowplot()
+
+ggplot(quail) +
+  aes(x = hatch.mass, color = sex, fill = sex) +
+  geom_histogram(binwidth = 0.5, position = "dodge") +
+  theme_cowplot()
+
+ggplot(quail) +
+  aes(x = hatch.mass,  fill = sex) + 
+  geom_density(alpha=.3) +
+  theme_cowplot()
+```
+
+There appears to be some other factors influencing the hatch mass, in addition to sex.
+
+### Explore the data to determine at least one other variable to incorporate into your model
+
+For comparison, you should choose one variable that you expect might be significant 
+and one that you expect will not be.
+
+```{r Data Exploration 2}
+
+```
+
+
+### Use the lm() function from Lab03 to test a hypothesis about one or more of these other factors.
+
+I have provided the base example.
+
+### Which p value equals (approximately) the p value from the original t.test()?
+
+```{r Linear Model}
+lmSex <- lm(hatch.mass ~ sex, data=quail)
+summary(lmSex)
+
+
+```
+
+### Compare this model to the original model that depended only on sex.
+
+Note to compare models using the anova() function, they need to be nested. 
+That is, one needs to be an extension of the other by adding one or more terms. 
+
+```{r Model Comparison}
+
+```
+
+## Peer Review
+
+```{r}
+roster <- read_csv("../../00-Syllabus/roster_2023.csv")
+roster %>%
+  filter(SECTION == "1") %>%
+  mutate(Peer1 = lag(Realname)) %>%
+  mutate(Peer2 = lag(Realname, n = 2)) %>%
+  select(Realname, Peer1, Peer2) %>%
+  print()
+roster %>%
+  filter(SECTION == "2") %>%
+  mutate(Peer1 = lag(Realname)) %>%
+  mutate(Peer2 = lag(Realname, n = 2)) %>%
+  select(Realname, Peer1, Peer2) %>%
+  head(n = Inf)
+```
+
+
+## Completion Checklist
+
+For completion of the assignment (DUE FRIDAY):
+[ ] Provide functional code that completes each objective
+[ ] Annotate the code with rationale and conclusions
+[ ] Push this code to your personal Repo before the deadline (Friday at 11:59pm)
+[ ] Provide acknowledgements (below) for any help you received, including links if applicable
+
+For full credit of the assignment (DUE MONDAY):
+[ ] Browse the Repo from two other members of the class (see separate email)
+[ ] Use the "Reference in New Issue" command on github.com to provide feedback
+[ ] Find at least one constructive criticism to improve the code or annotation
+[ ] Comment on at least one approach or interpretation that you could use to improve your future analysis in this class
+
+
+## Acknowledgements
+=========================
+
