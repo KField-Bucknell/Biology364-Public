@@ -1,0 +1,288 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+	% These packages are optional, depending whether you want the features they provide.
+	% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+	\geometry{letterpaper} % or letterpaper (US) or a5paper or....
+	\geometry{margin=0.75in} % for example, change the margins to 2 inches all round
+	% \geometry{landscape} % set up the page for landscape
+	%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+% \usepackage{sidecap}
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+% \usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+% \usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+%\usepackage{datetime} %suggested to get todays data and time
+% These packages are all incorporated in the memoir class to one degree or another...
+
+% \usepackage{listings} % For displaying code
+
+% \usepackage{placeins}      % This package gives us \FloatBarrier
+
+% \usepackage{mathtools} % this will also load amsmath package
+
+%%% HEADERS & FOOTERS
+% \usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+%\pagestyle{fancy} % options: empty , plain , fancy
+%\renewcommand{\headrulewidth}{0pt} % customise the layout...
+%\lhead{}\chead{BIOL 364/664 Syllabus}\rhead{}
+%\lfoot{}\cfoot{\thepage}\rfoot{}
+%\lfoot{\today}\cfoot{}\rfoot{\thepage}
+
+%%% SECTION TITLE APPEARANCE
+% \usepackage{sectsty}
+% \allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%\usepackage[labelfont = footnotesize, textfont = small, justification=centering]{caption}  %allows us to change the font of the captions on figures
+%\setlength{\abovecaptionskip}{5pt}
+%\setlength{\belowcaptionskip}{-10pt}
+
+% \usepackage{wrapfig}  %allows figures to have text wrapped around them. Apparently this does not work perfectly in Latex and requires manual adjustment of figures and such
+
+% \hyphenation{op-tical net-works semi-conduc-tor}
+%
+%\usepackage{parskip}
+%\setlength{\parindent}{5pt}
+
+% \usepackage{enumitem}  %%%%allows you to begin enumerate at 0
+
+%%% ToC (table of contents) APPEARANCE
+% \usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+% \usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+% \renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+% \renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+\newcommand{\squeezeup}{\vspace{-2.5mm}}
+
+%%%must be the last package called
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue, urlcolor=blue, pdftitle=DSCI351-351M-451, pdfauthor=RHF, pdfsubject=EMSE343-443, pdfkeywords=}
+
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{Biology 364/664 Syllabus \\ \emph{Advanced Data Analysis in Biology} \\ Spring 2022 	\\
+Mon 1:30-2:50 or 3:00-4:20 and Wed 1:30-4:20}
+\author{Prof. Ken Field}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+
+%\begin{figure} [!htbp]
+%\centering
+%	\includegraphics[height=.4\textheight]{figs/1501DSCI351Syllabus}
+%	\caption{Syllabus, concepts and organization} 
+%	\label{fig:Syllabus}
+%\end{figure}
+
+
+%-------------------------------------------------------
+\section{Contact Information}
+  \begin{itemize}
+  	\item 208 Biology Building
+  	\item kfield@bucknell.edu
+  	\item @ProfKenField on Twitter
+  	\item @KField-Bucknell on GitHub
+  \end{itemize}
+  
+  
+%-------------------------------------------------------
+\section{Course Description}
+
+Reproducibility, transparency, and avoiding questionable research practices while discussing how to design experiments and then collect, analyze, explore, and present data. Using “big data” from their own research projects or public transcriptomic datasets students will learn to analyze/visualize complex biological datasets. Includes hands-on work with R. No prior programming experience required. 
+    
+    
+%-------------------------------------------------------
+\section{Course Objectives}\label{course-objectives}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Students will analyze, visualize, and intepret real-world
+  datasets using reproducible data science methods and R, R markdown, and Git.
+\item
+  Students will learn to identify and avoid questionable research practices 
+  when designing experiments, analyzing data, and presenting results.
+\item
+  Working as a team, students will complete novel projects utilizing
+  whole-transcriptome or whole-genome datasets.
+\item
+  Students will present their final projects using complex
+  multi-dimensional data visualizations.
+\end{enumerate}
+
+\section{Grading}
+
+  \begin{itemize}
+    \item Eight Homeworks, worth 12.5 points each = 100 pts.\\
+    \item Four Data Projects, worth 25 points each = 100 pts.\\
+    \item Takehome Midterm xam = 100 pts.\\
+    \item Takehome Final Exam = 100 pts.\\
+    \item {\bf Total = 400 pts.}
+  \end{itemize}
+
+  The Homework assignments and Data Projects will be graded using labor-based grading as described by \href{http://www.translingualwriting.com/resources/Inoue\%20Contract.pdf}{Asao Inoue}. These assignments will utilize a goal-oriented grading system as you develop your skills as a data scientist.  When you (or your group) complete all of the goals associated with each project, you will earn 85\% of the available points. Failure to do so will result in a lower grade.
+
+To earn more than 85\%, you must do the following:
+\begin{itemize}
+  \item Propose and perform additional analysis and visualization comparisons (discuss available options with me).
+  \item Routinely assist in the learning and proficiency of your peers.
+\end{itemize}
+
+
+\section{Textbooks and Readings}
+
+  Required Texts and their Abbreviations, which are used on the syllabus:
+  
+  Main textbook:
+    
+  \begin{itemize}
+  \item \href{https://oxford.universitypressscholarship.com/view/10.1093/oso/9780198869979.001.0001/oso-9780198869979}{Applied Statistics with R: A Practical Guide for the Life Sciences} by Justin C. Touchon, (ASR)
+  \end{itemize}
+    
+  Leanpub textbooks (pay what you want for PDF or online version):
+
+  \begin{itemize}  
+    \item \href{https://leanpub.com/rprogramming}{R Programming for Data Science}, by Roger D. Peng (PRP)
+  
+    \item \href{https://leanpub.com/exdata}{Exploratory Data Analysis}, by Roger D. Peng (EDA) 
+    
+    \item \href{https://leanpub.com/openintro-statistics}{Open Intro Statistics 4} (OIS)  
+  
+  Open Access Books, available from online for free: 
+  
+    \item \href{http://r4ds.had.co.nz/}{R for Data Science} (R4DS)
+    
+    \item \href{https://statsthinking21.org/}{Statistical Thinking for the 21st Century} (21st)
+  
+    \item Additional reading assignments will be distributed via the course git repository in the Readings subdirectory. 
+  \end{itemize}
+
+
+%-------------------------------------------------------
+
+\section{Policies}
+
+  \subsection{Attendance}
+  
+    Your attendance at all classes and lab is expected, but not a graded part of the course. If you will need to miss lab for any reason, contact Prof. Field before class to make arrangements. However, I want everyone to know that absences due to health concerns will always be accommodated. 
+  
+  \subsection{Readings}
+  
+    Readings must be done BEFORE the class where they are assigned. For dates with multiple reading assignments, browse each to determine the sections that are most useful to you. There will be overlap between the various textbooks and you should choose the book that is best for you and your individual background.
+  
+  \subsection{Homework Assignments}
+  
+    Homeworks are due before 11:59pm on Friday on the week they are assigned.
+    Homework assignments will be submitted on GitHub (more instructions to follow).
+    A 25\% deduction will be assessed for submissions not received on time. Assignments will not be accepted after noon on Sunday.
+  
+  \subsection{Collaboration and Citation}
+  
+    For all projects and homework assignments working together is acceptable \textbf{and encouraged}. 
+    It is not ethical to do someone else's work or to have someone do your work. 
+    You must cite \textbf{all} resources used to work on your homework and projects. 
+    Citations should be done at the end of the document. 
+    These references can be to books, Stack Overflow and other web resources, and discussions with other students. 
+    Working together and discussion is not allowed on takehome exams.
+  
+  \subsection{Academic Integrity Policy}
+  
+    Read \href{"https://www.bucknell.edu/academics/academic-responsibility-support/academic-responsibility"}{Academic Responsibility at Bucknell} for policies regarding academic integrity. Any questions concerning academic responsibility or misconduct will be referred to the Board of Review for Academic Responsibility without hesitation. Always cite the source of any information from outside sources, including online sources and classmates. Assignments may be screened using software designed to detect plaigarism. Unless explicitly directed otherwise, all takehome exams are expected to represent individual, not collaborative, work.
+  
+  \subsection{Bucknell University Honor Code}
+  \begin{itemize}
+  \item I will not lie, cheat, or steal in my academic endeavors.
+  \item I will forthrightly oppose each and every instance of academic dishonesty.
+  \item I will let my conscience guide my decision to communicate directly with any person or persons I believe to have been dishonest in academic work.
+  \item I will let my conscience guide my decision on reporting breaches of academic integrity to the appropriate faculty or deans.
+  \end{itemize}
+
+  \subsection{Accommodations}
+  
+  Any student who needs an accommodation based on the impact of a disability should contact the \href{https://www.bucknell.edu/life-bucknell/diversity-equity-inclusion/accessibility-resources}{Office of Accessibility Resources} at OAR@bucknell.edu, 570-577-1188 or in room 212 Carnegie Building who will coordinate reasonable accommodations for students with documented disabilities. 
+
+%-------------------------------------------------------
+
+\section{License}
+  
+    Creative Commons plays an important role in open science, open data, open source efforts. This class is covered by a \href{"http://creativecommons.org/licenses/"}{Creative Commons} license. The license we'll use for class materials, code, and presentations is covered by the "Attribution-ShareAlike 4.0 International" license, which is commonly called the CC BY-SA 4.0 license. Some of the materials for this course, including portions of the Syllabus, are derived from work by Roger H. French \href{"https://twitter.com/frenchrh"}{@frenchrh} Kyocera Professor, Materials Science, Case Western Reserve University.
+
+
+%-------------------------------------------------------
+%\FloatBarrier
+\section{BIOL 364 Syllabus: Weekly Topics}
+\begin{table}[ht] 
+	\centering % used for centering table 
+	\begin{tabular}{| c | m{5cm} | m{3cm} | m{5.5cm} |} % centered columns (4 columns) 
+	\hline %inserts horizontal line
+	{\bf Week:Date} & {\bf Topic} & {\bf Reading} & {\bf Project}  \\ % inserts table heading 
+	\hline 
+	\hline % inserts double horizontal line 
+  w1:19Jan2022 & Using R, Rstudio & {\bf ASR1} \newline PRP4-5 & Making Graphs in R \\ % inserting body of the table 
+	\hline
+	w2:24Jan2022 & Simple Data Exploration, Git & {\bf ASR2-3} \newline PRP6-10 \newline EDA4-7 \newline OIS1-4  & Data Exploration in R \\ 
+	\hline
+	w3:31Jan2022 & Data Visualization & {\bf ASR4-5} \newline EDA15-16 \newline OIS5-7 \newline 21st6-7 & {\bf R Tutorial Project}\\ 
+	\hline 
+	w4:07Feb2022 & Advanded Hypothesis Testing & {\bf ASR6} \newline {\bf ASA.pdf} \newline OIS8-9 \newline 21st8-9  & Exploratory Data Analysis \\ 
+	\hline 
+	w5:14Feb2022 & Questionable Data Practices & {\bf Fraser.pdf} \newline R4DS22-25 \newline 21st10-13,26-27 & Multiple Testing \newline Model Fitting \\ 
+	\hline 
+	w6:21Feb2022 & Questionable Data Practices & {\bf Forstmeier.pdf} \newline PRP12 \newline EDA12-14 \newline 21st16-21  & {\bf QRP Case Studies Project} \\ 
+	\hline 
+	w7:28Feb2022 & Reproducibility & {\bf Errington.pdf} &  \\ 
+	\hline 
+	w8:07Mar2022 & Transcriptomics & \href{https://rnaseq.uoregon.edu/}{RNA-seqlopedia} & {\bf TAKEHOME MIDTERM} \\ 
+	\hline 
+	14Mar2022 & \multicolumn{3}{c}{\bf SPRING BREAK}\\ 
+	\hline
+	w9:21Mar2022 & Transcriptomics & Brooks.pdf & Big Data Wrangling \\
+	\hline
+	w10:28Mar2022 & Transcriptomics & 21st32 \newline Williams.pdf  \newline SARTools.pdf  & Big Data Visualization  \\
+	\hline
+	w11:4Apr2022 & Transcriptomics Project & minitufte.pdf & {\bf Transcriptomics Pipeline Project} \\
+	\hline
+	w12:11Apr2022 & Transcriptomics Project &  & Open Science \newline Preregistration \\
+	\hline 
+	w13-14:18Apr2022 & Transcriptomics Project & & {\bf Transcriptomics Presentations}  \\ 
+	\hline
+	\hline
+	\hline
+	{\bf 04May2020}	  & \multicolumn{3}{c}{\bf TAKEHOME FINAL} \\
+	\hline
+	\hline
+\end{tabular}
+ 
+\caption{BIOL364/664 Weekly Syllabus. Touchon, Applied Statistics with R (ASR), Peng R Programming for Data Science (PRP), Peng Exploratory Data Analysis (EDA), Open Intro Statistics (OIS), R for Data Science (R4DS),  and A Primer in Biological Data Analysis and Visualization Using R (HART) refers to chapters assigned as reading. {\bf Bold font} indicates required reading. }
+\label{table:Syllabus} % is used to refer this table in the text 
+\end{table} 
+
+%\FloatBarrier
+
+%-------------------------------------------------------
+
+
+\end{document}
